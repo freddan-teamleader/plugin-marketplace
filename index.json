@@ -1,1 +1,17 @@
-[]
+[
+  {
+    "id": "stock-ticker",
+    "name": "Stock Ticker",
+    "description": "Live stock prices with sparkline trends using the Finnhub API. Supports multiple symbols, configurable refresh interval, and currency display.",
+    "author": "freddan-teamleader",
+    "authorUrl": "https://github.com/freddan-teamleader",
+    "version": "1.0.2",
+    "tags": ["finance", "stocks", "live-data", "charts"],
+    "license": "MIT",
+    "sourceUrl": "https://raw.githubusercontent.com/freddan-teamleader/dashboard-plugins/3487b074c63873a7c6c85db7294e6dbb4af4dd28/plugins/stock-ticker/1.0.2/plugin.js",
+    "publishedAt": "2026-03-24",
+    "status": "approved",
+    "verified": true,
+    "maintainer": "freddan-teamleader"
+  }
+]
