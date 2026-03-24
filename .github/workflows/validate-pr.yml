@@ -1,0 +1,34 @@
+name: Stage 1 — Validate PR
+
+on:
+  pull_request:
+    paths:
+      - 'index.json'
+
+jobs:
+  validate:
+    name: Validate plugin submission
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      statuses: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install validator dependencies
+        run: npm install --prefix .github/scripts
+
+      - name: Run validation
+        id: validate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: node .github/scripts/validate.js

@@ -1,0 +1,59 @@
+name: Update install stats
+
+on:
+  repository_dispatch:
+    types: [plugin-installed]
+
+# Serialize all stat updates so parallel installs don't cause write conflicts
+concurrency:
+  group: update-stats
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Increment install count
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update stats.json
+        env:
+          PLUGIN_ID:   ${{ github.event.client_payload.id }}
+          SOURCE_REPO: ${{ github.event.client_payload.repo }}
+        run: |
+          node - <<'EOF'
+          const fs   = require('fs')
+          const id   = process.env.PLUGIN_ID
+          const repo = process.env.SOURCE_REPO
+
+          if (!id || !repo) {
+            console.log('Missing id or repo — skipping')
+            process.exit(0)
+          }
+
+          const stats = JSON.parse(fs.readFileSync('stats.json', 'utf8') || '{}')
+          const entry = stats[id] ?? { installs: 0, repos: [] }
+
+          if (entry.repos.includes(repo)) {
+            console.log(`${repo} already counted for ${id} — skipping`)
+            process.exit(0)
+          }
+
+          entry.installs++
+          entry.repos.push(repo)
+          stats[id] = entry
+
+          fs.writeFileSync('stats.json', JSON.stringify(stats, null, 2) + '\n')
+          console.log(`Incremented ${id} to ${entry.installs} (added ${repo})`)
+          EOF
+
+      - name: Commit updated stats
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add stats.json
+          git diff --staged --quiet || git commit -m "stats: increment install count for ${{ github.event.client_payload.id }}"
+          git push

@@ -1,0 +1,33 @@
+name: Stage 2 — AI Review (Claude)
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to review'
+        required: true
+        type: string
+
+jobs:
+  ai-review:
+    name: Claude AI review
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install reviewer dependencies
+        run: npm install --prefix .github/scripts
+
+      - name: Run AI review
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+        run: node .github/scripts/ai-review.js
