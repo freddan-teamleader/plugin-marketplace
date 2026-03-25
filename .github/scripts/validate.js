@@ -5,7 +5,7 @@
  * Checks (in order):
  *   1. Rate limit — max 3 open PRs per GitHub account
  *   2. Schema    — all required fields present, correct types
- *   3. SHA pin   — sourceUrl must be raw.githubusercontent.com + 40-char SHA
+ *   3. SHA pin   — sourceUrl must be raw.githubusercontent.com or gist.githubusercontent.com + 40-char SHA
  *   4. Verified  — only the repo owner may set verified:true
  *   5. Fetch     — sourceUrl is reachable and returns code
  *   6. Validator — syntax + semantic check (adapted from pluginValidator.js)
@@ -29,6 +29,7 @@ const REPO_FULL  = 'freddan-teamleader/plugin-marketplace'
 const REPO_OWNER = 'freddan-teamleader'
 const GH_API     = 'https://api.github.com'
 const RAW_HOST   = 'raw.githubusercontent.com'
+const GIST_HOST  = 'gist.githubusercontent.com'
 const SHA_RE     = /^[0-9a-f]{40}$/i
 const MAX_OPEN_PRS = 3
 
@@ -261,15 +262,17 @@ async function main() {
         const parts = url.pathname.split('/').filter(Boolean)
         // raw.githubusercontent.com / owner / repo / SHA / ...file
         if (url.hostname === RAW_HOST && parts.length >= 4 && SHA_RE.test(parts[2])) shaOk = true
+        // gist.githubusercontent.com / user / gist-id / raw / SHA / file
+        if (url.hostname === GIST_HOST && parts.length >= 5 && SHA_RE.test(parts[3])) shaOk = true
       } catch {}
 
       if (!shaOk) {
         results.push({
           check: `${prefix} SHA pin`,
           status: 'fail',
-          message: `\`sourceUrl\` must be a \`${RAW_HOST}\` URL with a full 40-character commit SHA, not a branch name. ` +
+          message: `\`sourceUrl\` must be a \`${RAW_HOST}\` or \`${GIST_HOST}\` URL with a full 40-character commit SHA, not a branch name. ` +
                    `Got: \`${entry.sourceUrl}\`\n\n` +
-                   `Get your SHA with: \`git rev-parse HEAD\``,
+                   `For a repo: \`git rev-parse HEAD\` · For a gist: copy the SHA from the gist's revision history.`,
         })
         fatal = true
       } else {
